@@ -14,10 +14,7 @@ from packaging import version
 
 VERSION = "3.1.1"
 
-IP_API = "https://api.ipify.org/?format=json"
-
-LATEST_RELEASE_API = "https://api.github.com/repos/SusmithKrishnan/torghost/releases/latest"
-
+IP_API = "https://api.myip.com/"
 
 class bcolors:
 
@@ -65,8 +62,6 @@ def usage():
     -r    --switch      Request new tor exit node
     -x    --stop        Stop Torghost
     -h    --help        print(this help and exit)
-    -u    --update      check for update
-
     """)
     sys.exit()
 
@@ -184,7 +179,7 @@ def stop_torghost():
     os.system('sudo fuser -k 9051/tcp > /dev/null 2>&1')
     print(bcolors.GREEN + '[done]' + bcolors.ENDC)
     print(t() + ' Restarting Network manager'),
-    os.system('service network-manager restart')
+    os.system('systemctl restart NetworkManager')
     print(bcolors.GREEN + '[done]' + bcolors.ENDC)
     print(t() + ' Fetching current IP...')
     time.sleep(3)
@@ -202,37 +197,8 @@ def switch_tor():
     print(t() + ' Fetching current IP...')
     print(t() + ' CURRENT IP : ' + bcolors.GREEN + ip() + bcolors.ENDC)
 
-
-def check_update():
-    print(t() + ' Checking for update...')
-    jsonRes = get(LATEST_RELEASE_API).json()
-    newversion = jsonRes["tag_name"][1:]
-    print(newversion)
-    if version.parse(newversion) > version.parse(VERSION):
-        print(t() + bcolors.GREEN + ' New update available!' + bcolors.ENDC)
-        print(t() + ' Your current TorGhost version : ' + bcolors.GREEN + VERSION + bcolors.ENDC)
-        print(t() + ' Latest TorGhost version available : ' + bcolors.GREEN + newversion + bcolors.ENDC)
-        yes = {'yes', 'y', 'ye', ''}
-        no = {'no', 'n'}
-
-        choice = input(
-            bcolors.BOLD + "Would you like to download latest version and build from Git repo? [Y/n]" + bcolors.ENDC).lower()
-        if choice in yes:
-            os.system(
-                'cd /tmp && git clone  https://github.com/SusmithKrishnan/torghost')
-            os.system('cd /tmp/torghost && sudo ./build.sh')
-        elif choice in no:
-            print(t() + " Update aborted by user")
-        else:
-            print("Please respond with 'yes' or 'no'")
-    else:
-        print(t() + " Torghost is up to date!")
-
-
 def main():
-    check_root()
     if len(sys.argv) <= 1:
-        check_update()
         usage()
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'srxhu', [
@@ -249,8 +215,6 @@ def main():
             stop_torghost()
         elif o in ('-r', '--switch'):
             switch_tor()
-        elif o in ('-u', '--update'):
-            check_update()
         else:
             usage()
 
